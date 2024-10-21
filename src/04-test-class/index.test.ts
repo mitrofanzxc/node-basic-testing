@@ -1,3 +1,4 @@
+import lodash from 'lodash';
 import {
     getBankAccount,
     InsufficientFundsError,
@@ -58,22 +59,28 @@ describe('BankAccount', () => {
     });
 
     test('fetchBalance should return number in case if request did not failed', async () => {
+        const random = jest.spyOn(lodash, 'random').mockImplementation(() => 1);
+
         const account = getBankAccount(100);
         const balance = await account.fetchBalance();
 
-        if (balance !== null) {
-            expect(typeof balance).toBe('number');
-        }
+        expect(balance).toBe(1);
+
+        random.mockRestore();
     });
 
     test('should set new balance if fetchBalance returned number', async () => {
         const account = getBankAccount(100);
 
+        const fetchBalance = jest.spyOn(account, 'fetchBalance').mockResolvedValueOnce(75);
+
         await account.synchronizeBalance();
 
         const newBalance = account.getBalance();
 
-        expect(typeof newBalance).toBe('number');
+        expect(newBalance).toBe(75);
+
+        fetchBalance.mockRestore();
     });
 
     test('should throw SynchronizationFailedError if fetchBalance returned null', async () => {
