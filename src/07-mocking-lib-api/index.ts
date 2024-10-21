@@ -9,6 +9,7 @@ const getDataFromApi = async (relativePath: string) => {
     });
 
     const response = await axiosClient.get(relativePath);
+
     return response.data;
 };
 

@@ -7,6 +7,7 @@ export const readFileAsynchronously = async (pathToFile: string) => {
 
     if (existsSync(fullPath)) {
         const fileContent = await readFile(fullPath);
+
         return fileContent.toString();
     }
 

@@ -1,34 +1,61 @@
-import axios from 'axios';
+import axios, { Axios } from 'axios';
 import { throttledGetDataFromApi } from './index';
 
-jest.mock('axios');
-const mockedAxios = axios as jest.Mocked<typeof axios>;
+const BASE_URL = '/posts';
+const BASE_URL_DETAILS = '/posts/1';
 
 describe('throttledGetDataFromApi', () => {
-    const mockResponse = { data: 'test data' };
+    beforeAll(() => {
+        jest.useFakeTimers();
+    });
 
-    beforeEach(() => {
-        mockedAxios.create.mockReturnThis();
-        mockedAxios.get.mockResolvedValue(mockResponse);
+    afterAll(() => {
+        jest.useRealTimers();
     });
 
     test('should create instance with provided base URL', async () => {
-        await throttledGetDataFromApi('/posts');
+        const axiosCreate = jest.spyOn(axios, 'create');
+        const axiosGet = jest.spyOn(Axios.prototype, 'get');
 
-        expect(mockedAxios.create).toHaveBeenCalledWith({
+        axiosGet.mockImplementation(async () => ({ data: {} }));
+
+        throttledGetDataFromApi(BASE_URL);
+
+        jest.runAllTimers();
+
+        expect(axiosCreate).toBeCalledWith({
             baseURL: 'https://jsonplaceholder.typicode.com',
         });
+
+        axiosCreate.mockRestore();
+        axiosGet.mockRestore();
     });
 
     test('should perform request to correct provided URL', async () => {
-        await throttledGetDataFromApi('/posts/1');
+        const axiosGet = jest.spyOn(Axios.prototype, 'get');
 
-        expect(mockedAxios.get).toHaveBeenCalledWith('/posts/1');
+        axiosGet.mockImplementation(async () => ({ data: {} }));
+
+        throttledGetDataFromApi(BASE_URL_DETAILS);
+
+        jest.runAllTimers();
+
+        expect(axiosGet).toBeCalledWith(BASE_URL_DETAILS);
+
+        axiosGet.mockRestore();
     });
 
     test('should return response data', async () => {
-        const data = await throttledGetDataFromApi('/posts');
+        const axiosGet = jest.spyOn(Axios.prototype, 'get');
 
-        expect(data).toBe(mockResponse.data);
+        axiosGet.mockImplementation(async () => ({
+            data: {
+                id: 1,
+            },
+        }));
+
+        expect(throttledGetDataFromApi(BASE_URL_DETAILS)).resolves.toMatchObject({ id: 1 });
+
+        axiosGet.mockRestore();
     });
 });
